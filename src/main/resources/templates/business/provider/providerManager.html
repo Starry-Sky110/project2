@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>供应商管理列表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resource/favicon.ico">
+    <link rel="stylesheet" href="/resource/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resource/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote quoteBox">
+    <form class="layui-form" id="searchForm" method="post">
+        <div class="layui-form-item" style="text-align: center">
+            <div class="layui-inline">
+                <label class="layui-form-label">供应商名称：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="providername" autocomplete="off" placeholder="请输入供应商名称"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">供应商电话：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="phone" autocomplete="off" placeholder="请输入供应商电话"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">联系人：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="connectionperson" autocomplete="off" placeholder="请输入联系人"
+                           class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <button type="button" class="layui-btn" id="doSearch" shiro:hasPermission="provider:view">
+                    <span class="layui-icon">&#xe615;</span>搜索
+                </button>
+                <button type="reset" class="layui-btn layui-btn-danger" id="doReset"
+                        shiro:hasPermission="provider:view">
+                    <span class="layui-icon">&#xe9aa;</span>重置
+                </button>
+            </div>
+
+
+        </div>
+    </form>
+</blockquote>
+<!--    表格-->
+<table id="providerTable" class="layui-table" lay-filter="providerTable"></table>
+
+<!--    头部工具栏-->
+<div id="providerTableToolBar" style="display: none">
+    <a class="layui-btn layui-btn-sm" id="add" lay-event="add" shiro:hasPermission="provider:create"><span
+            class="layui-icon">&#xe609;</span>添加</a>
+    <a class="layui-btn layui-btn-sm layui-btn-danger" id="batchdel" lay-event="batchdel"
+       shiro:hasPermission="provider:delete"><span
+            class="layui-icon">&#xe640;</span>批量删除</a>
+</div>
+
+<!--操作-->
+<div id="providerTableRowBar" style="display: none">
+    <a class="layui-btn layui-btn-xs" lay-event="update" shiro:hasPermission="provider:update">
+        <span class="layui-icon">&#xe642;</span>编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del" shiro:hasPermission="provider:delete">
+        <span class="layui-icon">&#xe640;</span>删除</a>
+
+</div>
+
+<!--弹出层-->
+<div id="saveOrUpdateDiv" style="display: none;padding: 3px">
+
+    <form class="layui-form layui-form-pane" id="dateFrm" lay-filter="dateFrm" method="post">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">供应商名称:</label>
+                <div class="layui-input-inline">
+                    <input type="hidden" name="id">
+                    <input type="text" name="providername" lay-verify="required" autocomplete="off"
+                           placeholder="请输入供应商名称" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">公司电话:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="telephone" lay-verify="required" autocomplete="off"
+                           placeholder="公司电话" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">邮编：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="zip" autocomplete="off"
+                           placeholder="邮编" class="layui-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">公司地址：</label>
+            <div class="layui-input-block">
+                <input type="text" name="address" autocomplete="off"
+                       placeholder="请输入公司地址" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">联系人:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="connectionperson" lay-verify="required" autocomplete="off"
+                           placeholder="请输入供应商名称" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">联系人电话:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="phone" lay-verify="required" autocomplete="off"
+                           placeholder="联系人电话" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">邮箱：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="email" autocomplete="off" lay-verify="required"
+                           placeholder="邮箱" class="layui-input">
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">开户银行:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="bank" lay-verify="required" autocomplete="off"
+                           placeholder="开户银行" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label">账号:</label>
+                <div class="layui-input-inline">
+                    <input type="text" name="account" lay-verify="required" autocomplete="off"
+                           placeholder="账号" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-input-inline">
+                <label class="layui-form-label">传真：</label>
+                <div class="layui-input-block">
+                    <input type="text" name="fax" autocomplete="off" lay-verify="required"
+                           placeholder="传真" class="layui-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-inline">
+            <label class="layui-form-label">是否有效</label>
+            <div class="layui-input-block">
+                <input type="radio" name="available" value="1" title="是" checked="checked">
+                <input type="radio" name="available" value="0" title="否">
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="text-align: center">
+            <button type="button" class="layui-btn" lay-filter="doSubmit" lay-submit="">
+                <span class="layui-icon">&#xe609;</span>提交
+            </button>
+            <button type="reset" class="layui-btn layui-btn-danger">
+                <span class="layui-icon">&#xe9aa;</span>重置
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+</body>
+<script type="text/javascript" src="/resource/layui/layui.js"></script>
+<script>
+    // 声明所用到的技术
+    layui.use(["table", "form", "layer", "jquery"], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+
+
+        //创建富文本编辑器
+        // var editIndex = layedit.build('content');
+
+        var tableIns = table.render({
+            elem: '#providerTable'
+            , height: 'full - 150'
+            , url: '/provider/loadAllProvider' //数据接口
+            , page: true //开启分页
+            , toolbar: '#providerTableToolBar' //开启头部工具栏
+            , title: '日志数据表'
+            , cols: [
+                [ //表头
+                    {type: 'checkbox', fixed: 'left'}
+                    , {field: 'id', title: '供应商ID', width: 100, sort: true, fixed: 'left', align: 'center'}
+                    , {field: 'providername', title: '供应商名称', width: 200, edit: "text", align: 'center'}
+                    , {field: 'zip', title: '供应商邮编', width: 200, edit: "text", align: 'center'}
+                    , {field: 'address', title: '供应商地址', width: 200, edit: "text", align: 'center'}
+                    , {field: 'telephone', title: '供应商电话', width: 200, edit: "text", align: 'center'}
+                    , {field: 'connectionperson', title: '联系人', width: 250, edit: "text", align: 'center'}
+                    , {field: 'phone', title: '联系人电话', width: 200, edit: "text", align: 'center'}
+                    , {field: 'bank', title: '开户行', width: 200, edit: "text", align: 'center'}
+                    , {field: 'account', title: '账户', width: 200, edit: "text", align: 'center'}
+                    , {field: 'email', title: '邮件', width: 200, edit: "text", align: 'center'}
+                    , {field: 'fax', title: '传真', width: 200, edit: "text", align: 'center'}
+                    , {
+                    field: 'available',
+                    title: '是否可用',
+                    width: 150,
+                    edit: "text",
+                    align: 'center',
+                    templet: function (res) {
+                        return res.available == 1 ? "<font color='blue'>可用</font>" : "<font color='red'>不可用</font>";
+                    }
+                }
+                    , {
+                    field: 'right',
+                    title: '操作',
+                    toolbar: '#providerTableRowBar',
+                    width: 200,
+                    align: 'center',
+                    fixed: 'right'
+                }
+                ]
+            ]
+        });
+
+        //查询
+        $("#doSearch").click(function () {
+            //收集用户数据 jquery中的序列化
+            var params = $("#searchForm").serialize();
+            tableIns.reload({
+                url: "/provider/loadAllProvider?" + params,
+                page: {
+                    curr: 1
+                }
+            })
+        })
+
+        //监听行工具栏
+        table.on('tool(providerTable)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            if (layEvent === 'update') {//编辑
+                openUpdateLayer(data);
+            } else if (layEvent === 'del') { //删除
+                layer.confirm('真的删除行么', function (index) {
+                    // obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.post("/provider/deleteProvider", {id: data.id}, function (obj) {
+                        if (obj.code == 200) {
+                            //刷新表格
+                            tableIns.reload();
+                            layer.msg(obj.msg);
+                        } else {
+                            layer.msg(obj.msg);
+                        }
+                    })
+                });
+            }
+        });
+
+        //监听头工具栏
+        //监听事件
+        table.on('toolbar(providerTable)', function (obj) {
+            switch (obj.event) {
+                case 'add':
+                    openAddLayer();
+                    break;
+                case 'batchdel':
+                    batchDelete(obj);
+                    break;
+            }
+            ;
+        });
+
+        var mainIndex;
+        var url;
+
+        //添加/发布
+        function openAddLayer() {
+
+            mainIndex = layer.open({
+                type: 1, //页面层
+                title: '发布公告',
+                skin: 'layui-layer-molv', //加上边框
+                area: ['1000px', '460px'], //宽高
+                content: $("#saveOrUpdateDiv"),
+                success: function (index) {
+                    url = "/provider/addProvider";
+                    //清空原来的数据
+                    $("#dateFrm")[0].reset();
+                }
+            });
+        }
+
+        //行工具栏编辑
+        function openUpdateLayer(data) {
+            mainIndex = layer.open({
+                type: 1, //页面层
+                title: '发布公告',
+                skin: 'layui-layer-molv', //加上边框
+                area: ['700px', '460px'], //宽高
+                content: $("#saveOrUpdateDiv"),
+                success: function (index) {
+                    url = "/provider/updateProvider";
+                    form.val("dateFrm", data);
+                }
+            });
+        }
+
+        //监听提交 弹出层数据
+        form.on('submit(doSubmit)', function (data) {
+            var params = $("#dateFrm").serialize();
+            $.post(url, params, function (obj) {
+                if (obj.code == 200) {
+                    //刷新表格
+                    tableIns.reload();
+                    layer.msg(obj.msg)
+                    layer.close(mainIndex);
+                } else {
+                    layer.msg(obj.msg)
+                }
+
+            })
+
+            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        });
+
+
+        //批量删除
+        function batchDelete(obj) {
+            var checkStatus = table.checkStatus("providerTable"); //获取选中行得数据
+            console.log(checkStatus.data);
+            console.log(checkStatus.data.length);
+            // layer.alert("测试");
+            if (checkStatus.data.length == 0) {
+                layer.msg("请选中要删除的行");
+            } else {
+                layer.confirm("真的要删除吗", function (index) {
+                    layer.close(index)
+                    var params = "";
+                    $.each(checkStatus.data, function (i, item) {
+                        if (i == 0) {
+                            params += "ids=" + item.id;
+                        } else {
+                            params += "&ids=" + item.id;
+                        }
+                    });
+                    //向后抬发送请求
+                    $.post("/provider/batchDeleteProvider", params, function (obj) {
+                        if (obj.code == 200) {
+                            //刷新表格
+                            tableIns.reload();
+                            layer.msg(obj.msg);
+                        } else {
+                            layer.msg(obj.msg);
+                        }
+                    })
+                })
+            }
+
+        }
+
+    })
+
+</script>
+
+</html>

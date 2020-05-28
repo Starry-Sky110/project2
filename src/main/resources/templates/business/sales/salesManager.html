@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resource/favicon.ico">
+    <link rel="stylesheet" href="/resource/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resource/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote quoteBox">
+    <form class="layui-form" id="searchForm" method="post">
+        <div class="layui-form-item" style="text-align: center">
+            <div class="layui-col-md6 layui-col-xs12">
+                <div class="layui-inline">
+                    <label class="layui-form-label">销售客户：</label>
+                    <div class="layui-input-block">
+                        <select id="searchCustomer" name="customerid" class="layui-select">
+                            <option value=''>请选择客户</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">商品名称：</label>
+                    <div class="layui-input-block">
+                        <select id="searchGoodsName" name="goodsid" class="layui-select">
+                            <option value=''>请选择商品</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6 layui-col-xs12">
+                <div class="layui-inline">
+                    <label class="layui-form-label">开始时间：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="startTime" id="startTime" autocomplete="off"
+                               placeholder="请选择开始时间" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">结束时间：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="endTime" id="endTime" autocomplete="off"
+                               placeholder="请选择结束时间" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <button type="button" class="layui-btn" id="doSearch" style="background-color: #007DDB"
+                        shiro:hasPermission="sales:view">
+                    <span class="layui-icon">&#xe615;</span>查询
+                </button>
+                <button type="reset" class="layui-btn layui-btn-danger" id="doReset"
+                        shiro:hasPermission="sales:view">
+                    <span class="layui-icon">&#xe9aa;</span>重置
+                </button>
+            </div>
+
+        </div>
+
+
+    </form>
+</blockquote>
+<!--    表格-->
+<table id="salesTable" class="layui-table" lay-filter="salesTable"></table>
+
+<!--    头部工具栏-->
+<div id="salesTableToolBar" style="display: none">
+    <a class="layui-btn layui-btn-sm" id="add" lay-event="add" shiro:hasPermission="sales:create"><span
+            class="layui-icon">&#xe609;</span>添加</a>
+</div>
+
+<!--操作-->
+<div id="salesTableRowBar" style="display: none">
+    <a class="layui-btn layui-btn-xs" lay-event="update" shiro:hasPermission="sales:update">
+        <span class="layui-icon">&#xe642;</span>修改</a>
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del" shiro:hasPermission="sales:delete">
+        <span class="layui-icon">&#xe640;</span>删除</a>
+    <a class="layui-btn layui-btn-xs" lay-event="salesBack" shiro:hasPermission="sales:update">
+        <span class="layui-icon">&#xe642;</span>退货</a>
+
+</div>
+<!--退货弹出层-->
+<div id="salesBackDiv" style="display: none;padding: 3px">
+    <form class="layui-form layui-form-pane layui-row layui-col-space10" id="salesBackFrm" lay-filter="salesBackFrm"
+          method="post">
+        <div class="layui-form-item">
+            <label class="layui-form-label">退货数量：</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="salesid">
+                <input type="hidden" name="currentNum" id="currentNum">
+                <input type="text" name="number" autocomplete="off" lay-verify="required|checkNumber"
+                       placeholder="请输入退货数量" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">退货原因：</label>
+            <div class="layui-input-block">
+                <textarea class="layui-textarea" placeholder="请输入退货原因" name="remark"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="text-align: center">
+            <button type="button" class="layui-btn" lay-filter="doSalesBackSubmit" lay-submit="">
+                <span class="layui-icon">&#xe609;</span>提交
+            </button>
+            <button type="reset" class="layui-btn layui-btn-danger">
+                <span class="layui-icon">&#xe9aa;</span>重置
+            </button>
+        </div>
+    </form>
+</div>
+
+<!--添加，修改弹出层-->
+<div id="saveOrUpdateDiv" style="display: none;padding: 3px">
+    <form class="layui-form layui-form-pane layui-row layui-col-space10" id="dateFrm" lay-filter="dateFrm"
+          method="post">
+        <div class="layui-form-item" style="text-align: center">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">销售客户：</label>
+                    <div class="layui-input-block">
+                        <input type="hidden" name="id">
+                        <select id="customerid" name="customerid" class="layui-select"
+                                lay-filter="customerid">
+                            <option value=''>请选择客户</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">商品名称：</label>
+                    <div class="layui-input-block">
+                        <select id="goodsid" name="goodsid" class="layui-select">
+                            <option value=''>请选择商品</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">销售数量：</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="number" autocomplete="off"
+                               placeholder="销售数量" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">销售价格：</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="saleprice" autocomplete="off"
+                               placeholder="销售价格" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label">支付类型</label>
+                <div class="layui-input-inline">
+                    <input type="radio" name="paytype" value="微信" title="微信" checked="checked">
+                    <input type="radio" name="paytype" value="支付宝" title="支付宝">
+                    <input type="radio" name="paytype" value="银联" title="银联">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">销售备注:</label>
+                <div class="layui-input-block">
+                    <textarea id="remark" name="remark" class="layui-textarea"></textarea>
+                </div>
+            </div>
+
+
+            <div class="layui-inline">
+                <button type="button" class="layui-btn" lay-filter="doSubmit" lay-submit="">
+                    <span class="layui-icon">&#xe609;</span>提交
+                </button>
+                <button type="reset" class="layui-btn layui-btn-danger">
+                    <span class="layui-icon">&#xe9aa;</span>重置
+                </button>
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+
+</body>
+<script type="text/javascript" src="/resource/layui/layui.js"></script>
+<script>
+    // 声明所用到的技术
+    layui.use(["table", "form", "layer", "jquery", 'laydate'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.jquery;
+            var laydate = layui.laydate;
+
+            laydate.render({
+                elem: '#startTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#endTime',
+                type: 'datetime'
+            });
+
+            //自定义校验
+            form.verify({
+                checkNumber: function (value, item) { //value 表单数据 item表单dom对象
+                    if (value <= 0 || value > parseInt($("#currentNum").val())) {
+                        return "退货数量必须是[1]-[" + $("#currentNum").val() + "]之间";
+                    }
+                }
+            });
+
+            //客户下拉列表
+            $.get("/customer/loadAllAvailableCustomer", function (res) {
+                var h = "<option value=''>请选择销售客户</option>";
+                $.each(res.data, function (i, item) {
+                    h += "<option value=" + item.id + ">" + item.customername + "</option>";
+                });
+                $("#searchCustomer").html(h);
+                form.render();
+            });
+
+            //商品下拉列表
+            $.get("/goods/loadAllAvailableGoods", function (res) {
+                //searchGoodsName
+                var h = "<option value=''>请选择商品</option>";
+                $.each(res.data, function (i, item) {
+                    h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                });
+                $("#searchGoodsName").html(h);
+                form.render();
+
+            });
+
+
+            var tableIns = table.render({
+                elem: '#salesTable'
+                , height: 'full - 150'
+                , url: '/sales/loadAllSales' //数据接口
+                , page: true //开启分页
+                , toolbar: '#salesTableToolBar' //开启头部工具栏
+                , title: '日志数据表'
+                , cols: [
+                    [ //表头
+                        {type: 'checkbox', fixed: 'left'}
+                        , {field: 'id', title: 'ID', width: 100, sort: true, fixed: 'left', align: 'center'}
+                        , {field: 'customername', title: '销售客户', width: 150, edit: "text", align: 'center'}
+                        , {field: 'goodsname', title: '商品名称', width: 150, edit: "text", align: 'center'}
+                        , {field: 'size', title: '规格', width: 100, edit: "text", align: 'center'}
+                        , {field: 'paytype', title: '支付类型', width: 150, edit: "text", align: 'center'}
+                        , {field: 'salestime', title: '销售时间', width: 230, edit: "text", align: 'center'}
+                        , {field: 'operateperson', title: '操作员', width: 200, edit: "text", align: 'center'}
+                        , {field: 'number', title: '销售数量', width: 100, edit: "text", align: 'center'}
+                        , {field: 'saleprice', title: '销售价格', width: 100, edit: "text", align: 'center'}
+                        , {field: 'remark', title: '备注', width: 200, edit: "text", align: 'center'}
+                        , {
+                        field: 'right',
+                        title: '操作',
+                        toolbar: '#salesTableRowBar',
+                        width: 250,
+                        align: 'center',
+                        fixed: 'right'
+                    }
+                    ]
+                ]
+            });
+
+            //查询
+            $("#doSearch").click(function () {
+                //收集用户数据 jquery中的序列化
+                var params = $("#searchForm").serialize();
+                // layer.alert(params)
+                tableIns.reload({
+                    url: "/sales/loadAllSales?" + params,
+                    page: {
+                        curr: 1
+                    }
+                })
+            })
+
+            //监听行工具栏
+            table.on('tool(salesTable)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                if (layEvent === 'update') {//编辑
+                    openUpdateLayer(data);
+                } else if (layEvent === 'del') { //删除
+                    layer.confirm('真的删除行么', function (index) {
+                        // obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                        layer.close(index);
+                        //向服务端发送删除指令
+                        $.post("/sales/deleteSales", {id: data.id, num: data.number}, function (obj) {
+                            if (obj.code == 200) {
+                                //刷新表格
+                                tableIns.reload();
+                                layer.msg(obj.msg);
+                            } else {
+                                layer.msg(obj.msg);
+                            }
+                        })
+                    });
+                } else if (layEvent === "salesBack") {
+                    openOutPort(data)
+                }
+            });
+
+            //监听头工具栏
+            //监听事件
+            table.on('toolbar(salesTable)', function (obj) {
+                switch (obj.event) {
+                    case 'add':
+                        openAddLayer();
+                        break;
+                }
+                ;
+            });
+
+            var mainIndex;
+            var url;
+            var outIndex;
+
+            //添加/发布
+            function openAddLayer() {
+
+                mainIndex = layer.open({
+                    type: 1, //页面层
+                    title: '添加商品',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['1000px', '460px'], //宽高
+                    content: $("#saveOrUpdateDiv"),
+                    success: function (index) {
+                        url = "/sales/addSales";
+                        //清空原来的数据
+                        $("#dateFrm")[0].reset();
+                        $.get("/customer/loadAllAvailableCustomer", function (res) {
+                            var h = "<option value=''>请选择销售客户</option>";
+                            $.each(res.data, function (i, item) {
+                                h += "<option value=" + item.id + ">" + item.customername + "</option>";
+                            });
+                            $("#customerid").html(h);
+                            form.render();
+                        });
+                        //监听商品
+                        $.get("/goods/loadAllAvailableGoods", function (res) {
+                            //searchGoodsName
+                            var h = "<option value=''>请选择商品</option>";
+                            $.each(res.data, function (i, item) {
+                                h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                            });
+                            $("#goodsid").html(h);
+                            form.render();
+                        });
+                        $("#customerid").removeAttr("disabled")
+                        $("#goodsid").removeAttr("disabled")
+                    }
+                });
+            }
+
+            //行工具栏 编辑
+            function openUpdateLayer(data) {
+                mainIndex = layer.open({
+                    type: 1, //页面层
+                    title: '修改商品',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['1000px', '460px'], //宽高
+                    content: $("#saveOrUpdateDiv"),
+                    success: function (index) {
+                        //重置数据
+                        $("#dateFrm")[0].reset();
+
+                        url = "/sales/updateSales";
+                        form.val("dateFrm", data);
+
+                        $.get("/customer/loadAllAvailableCustomer", function (res) {
+                            var h = "<option value=''>销售客户</option>";
+                            $.each(res.data, function (i, item) {
+                                if (item.id == data.customerid) {
+                                    h += "<option value=" + item.id + " selected='selected'>" + item.customername + "</option>";
+                                } else {
+                                    h += "<option value=" + item.id + ">" + item.customername + "</option>";
+                                }
+                            });
+                            $("#customerid").html(h);
+                        });
+                        $.get("/goods/loadAllAvailableGoods", function (res) {
+                            //searchGoodsName
+                            var h = "<option value=''>请选择商品</option>";
+                            $.each(res.data, function (i, item) {
+                                if (item.id == data.goodsid) {
+                                    h += "<option value=" + item.id + " selected='selected'>" + item.goodsname + "</option>";
+                                } else {
+                                    h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                                }
+                            });
+                            $("#goodsid").html(h);
+                        });
+                        form.render();
+                        //设置俩下拉选择框为只读
+                        $("#customerid").attr("disabled", "disabled")
+                        $("#goodsid").attr("disabled", "disabled")
+                    }
+                });
+            }
+
+
+            //退货  doSalesBackSubmit
+            function openOutPort(data) {
+                outIndex = layer.open({
+                    type: 1, //页面层
+                    title: '商品退货',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['700px', '460px'], //宽高
+                    content: $("#salesBackDiv"),
+                    success: function (index) {
+                        //清空原来的数据
+                        $("#salesBackFrm")[0].reset();
+                        //给currentNum，sales赋值
+                        form.val("salesBackFrm", {salesid: data.id, currentNum: data.number})
+                    }
+                });
+            }
+
+            //监听退货提交按钮
+            form.on("submit(doSalesBackSubmit)", function (data) {
+                // var params = $("#salesBackFrm").serialize();
+                $.post("/salesback/addSalesBack", data.field, function (obj) {
+                    if (obj.code == 200) {
+                        //刷新表格
+                        tableIns.reload();
+                        layer.msg(obj.msg)
+                        layer.close(outIndex);
+                    } else {
+                        layer.msg(obj.msg)
+                    }
+                })
+            })
+
+            //监听提交 弹出层数据
+            form.on('submit(doSubmit)', function (data) {
+                var params = $("#dateFrm").serialize();
+                $.post(url, params, function (obj) {
+                    if (obj.code == 200) {
+                        //刷新表格
+                        tableIns.reload();
+                        layer.msg(obj.msg)
+                        layer.close(mainIndex);
+                    } else {
+                        layer.msg(obj.msg)
+                    }
+
+                })
+
+                return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+            });
+
+        }
+    )
+
+</script>
+
+</html>

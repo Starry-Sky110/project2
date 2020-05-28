@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="salesSystem.sys.mapper.UserMapper">
+
+    <select id="queryUserMaxOrderNum" resultType="java.lang.Integer">
+        select max(ordernum)+1 from sys_user
+    </select>
+
+    <delete id="deleteUserAndRoleByUserId">
+        delete from sys_role_user where uid=#{id}
+    </delete>
+
+    <insert id="saveUserRole">
+        insert into sys_role_user(rid,uid) values(#{rid},#{uid})
+    </insert>
+</mapper>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>进货管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="/resource/favicon.ico">
+    <link rel="stylesheet" href="/resource/layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="/resource/css/public.css" media="all"/>
+</head>
+<body class="childrenBody">
+<blockquote class="layui-elem-quote quoteBox">
+    <form class="layui-form" id="searchForm" method="post">
+        <div class="layui-form-item" style="text-align: center">
+            <div class="layui-col-md6 layui-col-xs12">
+                <div class="layui-inline">
+                    <label class="layui-form-label">供应商：</label>
+                    <div class="layui-input-block">
+                        <select id="searchProvider" name="providerid" class="layui-select">
+                            <option value=''>请选择供应商</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">商品名称：</label>
+                    <div class="layui-input-block">
+                        <select id="searchGoodsName" name="goodsid" class="layui-select">
+                            <option value=''>请选择商品</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6 layui-col-xs12">
+                <div class="layui-inline">
+                    <label class="layui-form-label">开始时间：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="startTime" id="startTime" autocomplete="off"
+                               placeholder="请选择开始时间" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">结束时间：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="endTime" id="endTime" autocomplete="off"
+                               placeholder="请选择结束时间" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <button type="button" class="layui-btn" id="doSearch" style="background-color: #007DDB"
+                        shiro:hasPermission="inport:view">
+                    <span class="layui-icon">&#xe615;</span>查询
+                </button>
+                <button type="reset" class="layui-btn layui-btn-danger" id="doReset"
+                        shiro:hasPermission="inport:view">
+                    <span class="layui-icon">&#xe9aa;</span>重置
+                </button>
+            </div>
+
+        </div>
+
+
+    </form>
+</blockquote>
+<!--    表格-->
+<table id="inportTable" class="layui-table" lay-filter="inportTable"></table>
+
+<!--    头部工具栏-->
+<div id="inportTableToolBar" style="display: none">
+    <a class="layui-btn layui-btn-sm" id="add" lay-event="add" shiro:hasPermission="inport:create"><span
+            class="layui-icon">&#xe609;</span>添加</a>
+</div>
+
+<!--操作-->
+<div id="inportTableRowBar" style="display: none">
+    <a class="layui-btn layui-btn-xs" lay-event="update" shiro:hasPermission="inport:update">
+        <span class="layui-icon">&#xe642;</span>修改</a>
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del" shiro:hasPermission="inport:delete">
+        <span class="layui-icon">&#xe640;</span>删除</a>
+    <a class="layui-btn layui-btn-xs" lay-event="outport" shiro:hasPermission="inport:update">
+        <span class="layui-icon">&#xe642;</span>退货</a>
+
+</div>
+<!--退货弹出层-->
+<div id="outPortDiv" style="display: none;padding: 3px">
+    <form class="layui-form layui-form-pane layui-row layui-col-space10" id="outPortFrm" lay-filter="outPortFrm"
+          method="post">
+        <div class="layui-form-item">
+            <label class="layui-form-label">退货数量：</label>
+            <div class="layui-input-block">
+                <input type="hidden" name="inportid">
+                <input type="hidden" name="currentNum" id="currentNum">
+                <input type="text" name="number" autocomplete="off" lay-verify="required|checknumber"
+                       placeholder="请输入退货数量" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">退货原因：</label>
+            <div class="layui-input-block">
+                <textarea class="layui-textarea" placeholder="请输入退货原因" name="remark"></textarea>
+            </div>
+        </div>
+
+        <div class="layui-form-item" style="text-align: center">
+            <button type="button" class="layui-btn" lay-filter="doOutPortSubmit" lay-submit="">
+                <span class="layui-icon">&#xe609;</span>提交
+            </button>
+            <button type="reset" class="layui-btn layui-btn-danger">
+                <span class="layui-icon">&#xe9aa;</span>重置
+            </button>
+        </div>
+    </form>
+</div>
+
+<!--添加，修改弹出层-->
+<div id="saveOrUpdateDiv" style="display: none;padding: 3px">
+    <form class="layui-form layui-form-pane layui-row layui-col-space10" id="dateFrm" lay-filter="dateFrm"
+          method="post">
+        <div class="layui-form-item" style="text-align: center">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">供应商：</label>
+                    <div class="layui-input-block">
+                        <input type="hidden" name="id">
+                        <select id="providerid" name="providerid" class="layui-select"
+                                lay-filter="providerid">
+                            <option value=''>请选择供应商</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">商品名称：</label>
+                    <div class="layui-input-block">
+                        <select id="goodsid" name="goodsid" class="layui-select">
+                            <option value=''>请选择商品</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">进货数量：</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="number" autocomplete="off"
+                               placeholder="进货数量" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">进货价格：</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="inportprice" autocomplete="off"
+                               placeholder="进货价格" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="layui-inline">
+                <label class="layui-form-label">支付类型</label>
+                <div class="layui-input-inline">
+                    <input type="radio" name="paytype" value="微信" title="微信" checked="checked">
+                    <input type="radio" name="paytype" value="支付宝" title="支付宝">
+                    <input type="radio" name="paytype" value="银联" title="银联">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">进货备注:</label>
+                <div class="layui-input-block">
+                    <textarea id="remark" name="remark" class="layui-textarea"></textarea>
+                </div>
+            </div>
+
+
+            <div class="layui-inline">
+                <button type="button" class="layui-btn" lay-filter="doSubmit" lay-submit="">
+                    <span class="layui-icon">&#xe609;</span>提交
+                </button>
+                <button type="reset" class="layui-btn layui-btn-danger">
+                    <span class="layui-icon">&#xe9aa;</span>重置
+                </button>
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+
+</body>
+<script type="text/javascript" src="/resource/layui/layui.js"></script>
+<script>
+    // 声明所用到的技术
+    layui.use(["table", "form", "layer", "jquery", 'upload', 'laydate'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            var layer = layui.layer;
+            var $ = layui.jquery;
+            var upload = layui.upload;
+            var laydate = layui.laydate;
+
+            laydate.render({
+                elem: '#startTime',
+                type: 'datetime'
+            });
+            laydate.render({
+                elem: '#endTime',
+                type: 'datetime'
+            });
+
+            //自定义校验
+            form.verify({
+                checknumber: function (value, item) { //value 表单数据 item表单dom对象
+                    if (value <= 0 || value > parseInt($("#currentNum").val())) {
+                        return "退货数量必须是[1]-[" + $("#currentNum").val() + "]之间";
+                    }
+                }
+            });
+
+            //供应商下拉列表
+            $.get("/provider/loadAllAvailableProvider", function (res) {
+                var h = "<option value=''>请选择供应商</option>";
+                $.each(res.data, function (i, item) {
+                    h += "<option value=" + item.id + ">" + item.providername + "</option>";
+                });
+                $("#searchProvider").html(h);
+                form.render();
+            });
+
+            //商品下拉列表
+            $.get("/goods/loadAllAvailableGoods", function (res) {
+                //searchGoodsName
+                var h = "<option value=''>请选择商品</option>";
+                $.each(res.data, function (i, item) {
+                    h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                });
+                $("#searchGoodsName").html(h);
+                form.render();
+
+            });
+
+
+            var tableIns = table.render({
+                elem: '#inportTable'
+                , height: 'full - 150'
+                , url: '/inport/loadAllInport' //数据接口
+                , page: true //开启分页
+                , toolbar: '#inportTableToolBar' //开启头部工具栏
+                , title: '日志数据表'
+                , cols: [
+                    [ //表头
+                        {type: 'checkbox', fixed: 'left'}
+                        , {field: 'id', title: 'ID', width: 100, sort: true, fixed: 'left', align: 'center'}
+                        , {field: 'providername', title: '供应商', width: 150, edit: "text", align: 'center'}
+                        , {field: 'goodsname', title: '商品名称', width: 150, edit: "text", align: 'center'}
+                        , {field: 'size', title: '规格', width: 100, edit: "text", align: 'center'}
+                        , {field: 'paytype', title: '支付类型', width: 150, edit: "text", align: 'center'}
+                        , {field: 'inporttime', title: '进货时间', width: 230, edit: "text", align: 'center'}
+                        , {field: 'operateperson', title: '操作员', width: 200, edit: "text", align: 'center'}
+                        , {field: 'number', title: '进货数量', width: 100, edit: "text", align: 'center'}
+                        , {field: 'inportprice', title: '进货价格', width: 100, edit: "text", align: 'center'}
+                        , {field: 'remark', title: '备注', width: 200, edit: "text", align: 'center'}
+                        , {
+                        field: 'right',
+                        title: '操作',
+                        toolbar: '#inportTableRowBar',
+                        width: 250,
+                        align: 'center',
+                        fixed: 'right'
+                    }
+                    ]
+                ]
+            });
+
+            //查询
+            $("#doSearch").click(function () {
+                //收集用户数据 jquery中的序列化
+                var params = $("#searchForm").serialize();
+                // layer.alert(params)
+                tableIns.reload({
+                    url: "/inport/loadAllInport?" + params,
+                    page: {
+                        curr: 1
+                    }
+                })
+            })
+
+            //监听行工具栏
+            table.on('tool(inportTable)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                if (layEvent === 'update') {//编辑
+                    openUpdateLayer(data);
+                } else if (layEvent === 'del') { //删除
+                    layer.confirm('真的删除行么', function (index) {
+                        // obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                        layer.close(index);
+                        //向服务端发送删除指令
+                        $.post("/inport/deleteInport", {id: data.id, num: data.number}, function (obj) {
+                            if (obj.code == 200) {
+                                //刷新表格
+                                tableIns.reload();
+                                layer.msg(obj.msg);
+                            } else {
+                                layer.msg(obj.msg);
+                            }
+                        })
+                    });
+                } else if (layEvent === "outport") {
+                    openOutPort(data)
+                }
+            });
+
+            //监听头工具栏
+            //监听事件
+            table.on('toolbar(inportTable)', function (obj) {
+                switch (obj.event) {
+                    case 'add':
+                        openAddLayer();
+                        break;
+                }
+                ;
+            });
+
+            var mainIndex;
+            var url;
+            var outIndex;
+
+            //添加/发布
+            function openAddLayer() {
+
+                mainIndex = layer.open({
+                    type: 1, //页面层
+                    title: '添加商品',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['1000px', '460px'], //宽高
+                    content: $("#saveOrUpdateDiv"),
+                    success: function (index) {
+                        url = "/inport/addInport";
+                        //清空原来的数据
+                        $("#dateFrm")[0].reset();
+                        $.get("/provider/loadAllAvailableProvider", function (res) {
+                            var h = "<option value=''>请选择供应商</option>";
+                            $.each(res.data, function (i, item) {
+                                h += "<option value=" + item.id + ">" + item.providername + "</option>";
+                            });
+                            $("#providerid").html(h);
+                            form.render();
+                        });
+                        //监听商品
+                        form.on('select(providerid)', function (data) {
+                            // console.log(data.elem); //得到select原始DOM对象
+                            // console.log(data.value); //得到被选中的值
+                            // console.log(data.othis); //得到美化后的DOM对象
+                            $.get("/goods/loadGoodsByProviderId", {providerId: data.value}, function (res) {
+                                //searchGoodsName
+                                var h = "<option value=''>请选择商品</option>";
+                                $.each(res.data, function (i, item) {
+                                    h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                                });
+                                $("#goodsid").html(h);
+                                form.render();
+                            });
+
+                        });
+                        $("#providerid").removeAttr("disabled")
+                        $("#goodsid").removeAttr("disabled")
+                    }
+                });
+            }
+
+            //行工具栏 编辑
+            function openUpdateLayer(data) {
+                mainIndex = layer.open({
+                    type: 1, //页面层
+                    title: '修改商品',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['1000px', '460px'], //宽高
+                    content: $("#saveOrUpdateDiv"),
+                    success: function (index) {
+                        //重置数据
+                        $("#dateFrm")[0].reset();
+
+                        url = "/inport/updateInport";
+                        form.val("dateFrm", data);
+
+                        $.get("/provider/loadAllAvailableProvider", function (res) {
+                            var h = "<option value=''>请选择供应商</option>";
+                            $.each(res.data, function (i, item) {
+                                if (item.id == data.providerid) {
+                                    h += "<option value=" + item.id + " selected='selected'>" + item.providername + "</option>";
+                                } else {
+                                    h += "<option value=" + item.id + ">" + item.providername + "</option>";
+                                }
+                            });
+                            $("#providerid").html(h);
+                        });
+                        $.get("/goods/loadGoodsByProviderId", {providerId: data.providerid}, function (res) {
+                            //searchGoodsName
+                            var h = "<option value=''>请选择商品</option>";
+                            $.each(res.data, function (i, item) {
+                                if (item.id == data.goodsid) {
+                                    h += "<option value=" + item.id + " selected='selected'>" + item.goodsname + "</option>";
+                                } else {
+                                    h += "<option value=" + item.id + ">" + item.goodsname + "</option>";
+                                }
+                            });
+                            $("#goodsid").html(h);
+                        });
+                        form.render();
+                        //设置俩下拉选择框为只读
+                        $("#providerid").attr("disabled", "disabled")
+                        $("#goodsid").attr("disabled", "disabled")
+                    }
+                });
+            }
+
+
+            //退货  doOutPortSubmit
+            function openOutPort(data) {
+                outIndex = layer.open({
+                    type: 1, //页面层
+                    title: '商品退货',
+                    skin: 'layui-layer-molv', //加上边框
+                    area: ['700px', '460px'], //宽高
+                    content: $("#outPortDiv"),
+                    success: function (index) {
+                        //清空原来的数据
+                        $("#outPortFrm")[0].reset();
+                        //给currentNum，inport赋值
+                        form.val("outPortFrm",{inportid:data.id,currentNum:data.number})
+                    }
+                });
+            }
+
+            //监听退货提交按钮
+            form.on("submit(doOutPortSubmit)", function (data) {
+                // var params = $("#outPortFrm").serialize();
+                $.post("/outport/addOutPort", data.field, function (obj) {
+                    if (obj.code == 200) {
+                        //刷新表格
+                        tableIns.reload();
+                        layer.msg(obj.msg)
+                        layer.close(outIndex);
+                    } else {
+                        layer.msg(obj.msg)
+                    }
+                })
+            })
+
+            //监听提交 弹出层数据
+            form.on('submit(doSubmit)', function (data) {
+                var params = $("#dateFrm").serialize();
+                $.post(url, params, function (obj) {
+                    if (obj.code == 200) {
+                        //刷新表格
+                        tableIns.reload();
+                        layer.msg(obj.msg)
+                        layer.close(mainIndex);
+                    } else {
+                        layer.msg(obj.msg)
+                    }
+
+                })
+
+                return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+            });
+
+        }
+    )
+
+</script>
+
+</html>

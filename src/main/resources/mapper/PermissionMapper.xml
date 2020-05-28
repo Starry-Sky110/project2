@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="salesSystem.sys.mapper.PermissionMapper">
+
+    <select id="queryPermissionCountByPid" resultType="java.lang.Integer">
+        select count(*) from sys_permission where pid=#{id} and `type`=#{type}
+    </select>
+
+    <select id="queryPermissionMaxOrderNum" resultType="java.lang.Integer">
+        select max(ordernum)+1 from sys_permission
+    </select>
+
+    <select id="queryPermissionIdsByRoleId" resultType="java.lang.Integer">
+        select pid from sys_role_permission where rid = #{rid}
+    </select>
+
+    <select id="queryPermissionIdsByRoleIds" resultType="java.lang.Integer">
+        select distinct pid from sys_role_permission
+        <where>
+            <foreach collection="rids" open="rid in(" close=")" separator="," item="sn">
+                #{sn}
+            </foreach>
+        </where>
+    </select>
+</mapper>
